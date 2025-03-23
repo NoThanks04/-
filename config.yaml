@@ -1,0 +1,55 @@
+# 烟雾环境下的人体目标检测系统配置文件
+
+# 数据配置
+data:
+  infrared_dir: "data/infrared"    # 红外图像目录
+  thermal_dir: "data/thermal"      # 热成像图像目录
+  fusion_dir: "data/fusion"        # 融合图像目录
+  annotation_file: "data/labels"   # YOLO格式标注目录
+  max_time_diff: 1.0               # 多模态数据时间戳最大差异（秒）
+
+# 烟雾去除算法配置
+smoke_removal:
+  algorithm: "clahe"               # 使用最快的CLAHE算法
+  # CLAHE参数
+  clahe:
+    clip_limit: 2.0
+    tile_grid_size: [2, 2]         # 小分块大小提高速度
+
+# 检测配置
+detection:
+  confidence_threshold: 0.5        # 置信度阈值
+  nms_threshold: 0.45             # 非极大值抑制阈值，提高可以减少重复框
+  max_detections: 10              # 每帧最大检测数量
+
+# 可视化配置
+visualization:
+  bbox_color: [0, 255, 0]          # 检测框颜色（绿色）
+  bbox_thickness: 2                # 检测框线条粗细
+  font_scale: 0.8                 # 字体大小增大
+  font_thickness: 2               # 字体粗细
+  show_conf: true                 # 显示置信度
+  show_fps: true                  # 显示FPS
+  show_smoke_removal: false       # 不显示烟雾去除信息
+  show_human_detection: true      # 显示人体检测结果
+  show_frame_info: true          # 显示帧信息
+  frame_info_color: [0, 255, 0]   # 帧信息颜色（绿色）
+  
+# 设备配置
+device: "cpu"                      # 使用CPU
+
+# 输出配置
+output:
+  save_video: true
+  save_images: false
+  output_dir: "results"
+  
+# 性能优化配置
+performance:
+  resize_input: true               # 调整输入大小
+  input_width: 320                 # 较小的输入尺寸
+  input_height: 240                # 较小的输入尺寸
+  process_every_n_frames: 5        # 每5帧处理1帧
+  skip_model_load: false           # 不跳过模型加载
+  use_dummy_detector: true         # 使用虚拟检测器
+  disable_visualization: false     # 保持可视化

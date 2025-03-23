@@ -1,0 +1,30 @@
+# 核心依赖
+numpy>=1.18.5
+opencv-python>=4.5.3
+PyYAML>=5.3.1
+torch>=1.7.0
+torchvision>=0.8.1
+
+# 图像处理相关
+scikit-image>=0.17.2
+pillow>=8.0.0
+matplotlib>=3.3.0
+
+# 烟雾去除算法
+scipy>=1.5.0
+
+# 检测模型相关
+# 如果使用YOLOv5
+# 安装方法：pip install -U yolov5
+# 或从源码安装: git clone https://github.com/ultralytics/yolov5 && cd yolov5 && pip install -e .
+
+# 视频处理
+tqdm>=4.41.0
+
+# 评估指标
+scikit-learn>=0.24.0
+pycocotools>=2.0
+
+# 可选依赖
+# CUDA支持，若使用GPU
+# cudatoolkit>=10.2  # 通过conda安装: conda install cudatoolkit=10.2 

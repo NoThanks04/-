@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UGround-V1-7B 模型评估 - GUI定位模型安全评估平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #5470ff;
+            --secondary-color: #f0f2f5;
+            --accent-color: #ff5555;
+            --success-color: #00c853;
+            --warning-color: #ffc107;
+            --gradient-primary: linear-gradient(135deg, #3a36e0 0%, #9370DB 100%);
+            --gradient-button: linear-gradient(to right, #f06, #9370DB);
+            --box-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --animation-timing: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #111;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background-color: rgba(25, 25, 25, 0.9);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            padding: 0.8rem 0;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: #fff !important;
+        }
+        
+        .nav-link.active {
+            color: #fff !important;
+            position: relative;
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--gradient-button);
+            border-radius: 2px;
+        }
+        
+        .page-header {
+            background-color: rgba(40, 40, 45, 0.8);
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .page-title {
+            font-weight: 700;
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+        
+        .page-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(to right, #f06, #3a36e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .card {
+            background: rgba(40, 40, 45, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: white;
+            padding: 1rem 1.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .btn-primary {
+            background: var(--gradient-button);
+            border: none;
+            border-radius: 30px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 20, 147, 0.3);
+        }
+        
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(58, 54, 224, 0.05);
+        }
+        
+        .model-info-icon {
+            font-size: 4rem;
+            color: #9370DB;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+        
+        .attack-param-slider {
+            margin-bottom: 1.5rem;
+        }
+        
+        footer {
+            background-color: rgba(25, 25, 25, 0.9);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 3rem 0;
+            margin-top: auto;
+        }
+        
+        .progress {
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .progress-bar {
+            background: var(--gradient-button);
+        }
+        
+        .form-label {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .form-control, .form-select {
+            background-color: rgba(30, 30, 35, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: rgba(40, 40, 45, 0.8);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 0.25rem rgba(58, 54, 224, 0.25);
+        }
+        
+        .nav-tabs {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-tabs .nav-link {
+            color: rgba(255, 255, 255, 0.7) !important;
+            background: transparent;
+            border: none;
+            padding: 0.5rem 1rem;
+            margin-right: 1rem;
+            position: relative;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: white !important;
+            background: transparent;
+            border: none;
+        }
+        
+        .nav-tabs .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--gradient-button);
+        }
+        
+        .comparison-container {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .comparison-image {
+            flex: 1;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .comparison-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .comparison-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .attacks-table th, .attacks-table td {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 1rem;
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .attacks-table thead th {
+            background-color: rgba(58, 54, 224, 0.1);
+            border-bottom: none;
+        }
+        
+        .back-btn {
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .back-btn:hover {
+            color: white;
+            transform: translateX(-5px);
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">
+            <i class="bi bi-shield-lock"></i> GUI定位模型安全评估平台
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html"><i class="bi bi-house"></i> 首页</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="#"><i class="bi bi-bar-chart"></i> 评估结果</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-file-earmark-text"></i> 文档</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-info-circle"></i> 关于</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <div class="container">
+        <a href="index.html" class="back-btn mb-3">
+            <i class="bi bi-arrow-left me-2"></i> 返回模型选择
+        </a>
+        <h1 class="page-title">UGround-V1-7B <span class="gradient-text">模型评估</span></h1>
+        <p class="page-subtitle">针对GUI界面定位任务的鲁棒性评估和对抗攻击测试</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <i class="bi bi-cpu me-2"></i> 模型信息
+                </div>
+                <div class="card-body text-center">
+                    <div class="model-info-icon">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <h3 class="mb-3">UGround-V1-7B</h3>
+                    <p>专为GUI场景优化的多模态语言模型，基于Qwen-VL的7B参数架构。</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <span>支持桌面场景</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <span>支持移动端场景</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <span>支持网页端场景</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <span>高精度定位能力</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-bar-chart-line me-2"></i> 评估结果展示
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">选择数据集:</label>
+                            <select class="form-select" id="datasetSelect">
+                                <option selected value="desktop">ScreenSpot-v2 桌面端</option>
+                                <option value="mobile">ScreenSpot-v2 移动端</option>
+                                <option value="web">ScreenSpot-v2 网页端</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">攻击方式:</label>
+                            <select class="form-select" id="attackTypeSelect">
+                                <option selected value="targeted">目标攻击</option>
+                                <option value="untargeted">非目标攻击</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <ul class="nav nav-tabs mb-4" id="resultTabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#summaryTab">评估概览</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#detailsTab">详细数据</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#samplesTab">样本分析</a>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="summaryTab">
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <div class="card stat-card">
+                                        <div class="stat-value" id="asrValue">87%</div>
+                                        <div class="stat-label">攻击成功率 (ASR)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card stat-card">
+                                        <div class="stat-value" id="origAccValue">92%</div>
+                                        <div class="stat-label">原始准确率 (ACC)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card stat-card">
+                                        <div class="stat-value" id="attackedAccValue">15%</div>
+                                        <div class="stat-label">攻击后准确率</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="bi bi-gear me-2"></i> 攻击参数
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <h6>扰动大小 (Epsilon)</h6>
+                                                <p class="mb-0" id="epsilonValue">16/255</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <h6>迭代次数</h6>
+                                                <p class="mb-0" id="iterValue">100</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <h6>步长</h6>
+                                                <p class="mb-0" id="stepValue">1/255</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <h6>样本数量</h6>
+                                                <p class="mb-0" id="sampleValue">437</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="bi bi-image me-2"></i> 示例结果
+                                </div>
+                                <div class="card-body">
+                                    <div class="comparison-container">
+                                        <div class="comparison-image">
+                                            <img src="https://placeholder.pics/svg/400x300" alt="原始图像" id="summaryOrigImg">
+                                            <div class="comparison-label">原始图像</div>
+                                        </div>
+                                        <div class="comparison-image">
+                                            <img src="https://placeholder.pics/svg/400x300" alt="攻击后图像" id="summaryAttackedImg">
+                                            <div class="comparison-label">攻击后图像</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <p><strong>原始预测点:</strong> <span id="originalPoint">(0.52, 0.38)</span> | <strong>攻击后预测点:</strong> <span id="attackedPoint">(0.01, 0.01)</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="detailsTab">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="bi bi-graph-up me-2"></i> 准确率随扰动大小变化
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="accuracyChart" height="250"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="bi bi-bullseye me-2"></i> 攻击成功率随扰动大小变化
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="asrChart" height="250"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="bi bi-distribute-vertical me-2"></i> 预测点偏移分布
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="dispersionChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="samplesTab">
+                            <div class="table-responsive">
+                                <table class="table attacks-table">
+                                    <thead>
+                                        <tr>
+                                            <th>样本ID</th>
+                                            <th>原始图像</th>
+                                            <th>攻击后图像</th>
+                                            <th>原始预测点</th>
+                                            <th>攻击后预测点</th>
+                                            <th>目标点</th>
+                                            <th>状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="samplesTableBody">
+                                        <tr>
+                                            <td>#001</td>
+                                            <td><img src="https://placeholder.pics/svg/100x80" alt="原图缩略图" class="img-thumbnail"></td>
+                                            <td><img src="https://placeholder.pics/svg/100x80" alt="攻击后缩略图" class="img-thumbnail"></td>
+                                            <td>(0.52, 0.38)</td>
+                                            <td>(0.01, 0.01)</td>
+                                            <td>(0.01, 0.01)</td>
+                                            <td><span class="badge bg-success">成功</span></td>
+                                            <td><button class="btn btn-sm btn-outline-primary">查看</button></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#002</td>
+                                            <td><img src="https://placeholder.pics/svg/100x80" alt="原图缩略图" class="img-thumbnail"></td>
+                                            <td><img src="https://placeholder.pics/svg/100x80" alt="攻击后缩略图" class="img-thumbnail"></td>
+                                            <td>(0.45, 0.29)</td>
+                                            <td>(0.01, 0.02)</td>
+                                            <td>(0.01, 0.01)</td>
+                                            <td><span class="badge bg-success">成功</span></td>
+                                            <td><button class="btn btn-sm btn-outline-primary">查看</button></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#003</td>
+                                            <td><img src="https://placeholder.pics/svg/100x80" alt="原图缩略图" class="img-thumbnail"></td>
+                                            <td><img src="https://placeholder.pics/svg/100x80" alt="攻击后缩略图" class="img-thumbnail"></td>
+                                            <td>(0.31, 0.42)</td>
+                                            <td>(0.28, 0.39)</td>
+                                            <td>(0.01, 0.01)</td>
+                                            <td><span class="badge bg-danger">失败</span></td>
+                                            <td><button class="btn btn-sm btn-outline-primary">查看</button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <nav aria-label="样本分页">
+                                <ul class="pagination justify-content-center mt-4">
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">上一页</a>
+                                    </li>
+                                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="#">下一页</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h4>GUI定位模型安全评估平台</h4>
+                <p>为视觉语言模型提供全面的安全评估和鲁棒性测试</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p>&copy; 2023 GUI安全评估团队</p>
+                <p>联系我们: contact@gui-security.example.com</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 模拟数据
+        const datasetData = {
+            'desktop': {
+                targetedAttack: {
+                    asr: '87%',
+                    originalAcc: '92%',
+                    attackedAcc: '15%',
+                    epsilon: '16/255',
+                    iterations: '100',
+                    stepSize: '1/255',
+                    sampleCount: '437',
+                    accuracyData: [92, 88, 73, 60, 44, 28, 15],
+                    asrData: [0, 15, 33, 52, 68, 79, 87],
+                },
+                untargetedAttack: {
+                    asr: '94%',
+                    originalAcc: '92%',
+                    attackedAcc: '8%',
+                    epsilon: '8/255',
+                    iterations: '50',
+                    stepSize: '1/255',
+                    sampleCount: '437',
+                    accuracyData: [92, 85, 68, 52, 34, 19, 8],
+                    asrData: [0, 25, 45, 68, 82, 90, 94],
+                }
+            },
+            'mobile': {
+                targetedAttack: {
+                    asr: '92%',
+                    originalAcc: '88%',
+                    attackedAcc: '9%',
+                    epsilon: '12/255',
+                    iterations: '120',
+                    stepSize: '2/255',
+                    sampleCount: '532',
+                    accuracyData: [88, 80, 65, 51, 34, 21, 9],
+                    asrData: [0, 20, 41, 58, 75, 86, 92],
+                },
+                untargetedAttack: {
+                    asr: '96%',
+                    originalAcc: '88%',
+                    attackedAcc: '5%',
+                    epsilon: '10/255',
+                    iterations: '80',
+                    stepSize: '2/255',
+                    sampleCount: '532',
+                    accuracyData: [88, 75, 59, 42, 26, 14, 5],
+                    asrData: [0, 30, 53, 72, 86, 93, 96],
+                }
+            },
+            'web': {
+                targetedAttack: {
+                    asr: '84%',
+                    originalAcc: '90%',
+                    attackedAcc: '18%',
+                    epsilon: '18/255',
+                    iterations: '90',
+                    stepSize: '1/255',
+                    sampleCount: '376',
+                    accuracyData: [90, 82, 70, 58, 42, 29, 18],
+                    asrData: [0, 12, 29, 47, 62, 75, 84],
+                },
+                untargetedAttack: {
+                    asr: '89%',
+                    originalAcc: '90%',
+                    attackedAcc: '12%',
+                    epsilon: '14/255',
+                    iterations: '70',
+                    stepSize: '1/255',
+                    sampleCount: '376',
+                    accuracyData: [90, 80, 65, 49, 35, 21, 12],
+                    asrData: [0, 18, 37, 55, 70, 82, 89],
+                }
+            }
+        };
+        
+        // 初始化图表
+        const accuracyCtx = document.getElementById('accuracyChart').getContext('2d');
+        const asrCtx = document.getElementById('asrChart').getContext('2d');
+        const dispersionCtx = document.getElementById('dispersionChart').getContext('2d');
+        
+        // 准确率图表
+        const accuracyChart = new Chart(accuracyCtx, {
+            type: 'line',
+            data: {
+                labels: ['0', '4', '8', '12', '16', '20', '24'],
+                datasets: [{
+                    label: 'UGround-V1-7B 准确率',
+                    data: datasetData.desktop.targetedAttack.accuracyData,
+                    borderColor: '#3a36e0',
+                    backgroundColor: 'rgba(58, 54, 224, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '不同扰动大小下的准确率变化 (ε/255)',
+                        color: 'rgba(255, 255, 255, 0.8)'
+                    },
+                    legend: {
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: '准确率 (%)',
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.6)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.6)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 攻击成功率图表
+        const asrChart = new Chart(asrCtx, {
+            type: 'line',
+            data: {
+                labels: ['0', '4', '8', '12', '16', '20', '24'],
+                datasets: [{
+                    label: 'UGround-V1-7B 攻击成功率',
+                    data: datasetData.desktop.targetedAttack.asrData,
+                    borderColor: '#ff5555',
+                    backgroundColor: 'rgba(255, 85, 85, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '不同扰动大小下的攻击成功率变化 (ε/255)',
+                        color: 'rgba(255, 255, 255, 0.8)'
+                    },
+                    legend: {
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: '攻击成功率 (%)',
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.6)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.6)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 散点图 - 预测点偏移分布
+        const dispersionChart = new Chart(dispersionCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: '原始预测点',
+                    data: Array.from({length: 30}, () => ({
+                        x: Math.random() * 0.6 + 0.2,
+                        y: Math.random() * 0.6 + 0.2
+                    })),
+                    backgroundColor: 'rgba(58, 54, 224, 0.8)',
+                    pointRadius: 5
+                }, {
+                    label: '攻击后预测点',
+                    data: Array.from({length: 30}, () => ({
+                        x: Math.random() * 0.05 + 0.01,
+                        y: Math.random() * 0.05 + 0.01
+                    })),
+                    backgroundColor: 'rgba(255, 85, 85, 0.8)',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '预测点位置分布',
+                        color: 'rgba(255, 255, 255, 0.8)'
+                    },
+                    legend: {
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 1,
+                        title: {
+                            display: true,
+                            text: 'Y坐标',
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.6)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        min: 0,
+                        max: 1,
+                        title: {
+                            display: true,
+                            text: 'X坐标',
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.6)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 更新页面数据
+        function updatePageData(dataset, attackType) {
+            const data = datasetData[dataset][attackType];
+            
+            // 更新统计数据
+            document.getElementById('asrValue').textContent = data.asr;
+            document.getElementById('origAccValue').textContent = data.originalAcc;
+            document.getElementById('attackedAccValue').textContent = data.attackedAcc;
+            
+            // 更新参数
+            document.getElementById('epsilonValue').textContent = data.epsilon;
+            document.getElementById('iterValue').textContent = data.iterations;
+            document.getElementById('stepValue').textContent = data.stepSize;
+            document.getElementById('sampleValue').textContent = data.sampleCount;
+            
+            // 更新图表数据
+            accuracyChart.data.datasets[0].data = data.accuracyData;
+            accuracyChart.update();
+            
+            asrChart.data.datasets[0].data = data.asrData;
+            asrChart.update();
+        }
+        
+        // 监听数据集和攻击类型选择变化
+        document.getElementById('datasetSelect').addEventListener('change', function() {
+            const dataset = this.value;
+            const attackType = document.getElementById('attackTypeSelect').value === 'targeted' ? 'targetedAttack' : 'untargetedAttack';
+            updatePageData(dataset, attackType);
+        });
+        
+        document.getElementById('attackTypeSelect').addEventListener('change', function() {
+            const attackType = this.value === 'targeted' ? 'targetedAttack' : 'untargetedAttack';
+            const dataset = document.getElementById('datasetSelect').value;
+            updatePageData(dataset, attackType);
+        });
+        
+        // 初始加载数据
+        updatePageData('desktop', 'targetedAttack');
+    });
+</script>
+</body>
+</html> 
